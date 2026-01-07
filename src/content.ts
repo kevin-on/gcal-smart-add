@@ -79,6 +79,11 @@ class TitleOverlay {
                 overflow: hidden;
                 color: ${this.getTextColor()};
             }
+            .chip {
+                background: #e8f0fe;
+                color: #1a73e8;
+                border-radius: 2px;
+            }
         `;
     }
 
@@ -117,8 +122,25 @@ class TitleOverlay {
     }
 
     updateText(text: string) {
-        // Replace spaces with non-breaking spaces to preserve whitespace rendering
-        this.textContainer.textContent = text.replace(/ /g, '\u00A0');
+        this.textContainer.innerHTML = '';
+
+        // Split by "today" as a whole word (case-insensitive), keeping the delimiter
+        const segments = text.split(/\b(today)\b/i);
+
+        for (const segment of segments) {
+            if (!segment) continue;
+
+            if (segment.toLowerCase() === 'today') {
+                const chip = document.createElement('span');
+                chip.className = 'chip';
+                chip.textContent = segment;
+                this.textContainer.appendChild(chip);
+            } else {
+                // Replace spaces with non-breaking spaces
+                const textNode = document.createTextNode(segment.replace(/ /g, '\u00A0'));
+                this.textContainer.appendChild(textNode);
+            }
+        }
     }
 
     destroy() {
