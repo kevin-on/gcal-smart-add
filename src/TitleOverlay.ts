@@ -1,3 +1,5 @@
+import { Token } from './parser/types';
+
 /**
  * Overlay that renders mirrored text over the title input
  */
@@ -105,24 +107,19 @@ export class TitleOverlay {
         this.rafId = requestAnimationFrame(tick);
     }
 
-    updateText(text: string) {
+    updateTokens(tokens: Token[]) {
         this.textContainer.innerHTML = '';
 
-        // Split by "today" (case-insensitive), keeping the delimiter
-        const segments = text.split(/(today)/i);
-
-        for (const segment of segments) {
-            if (!segment) continue;
-
-            if (segment.toLowerCase() === 'today') {
+        for (const token of tokens) {
+            if (token.type === 'text') {
+                // Replace spaces with non-breaking spaces
+                const textNode = document.createTextNode(token.raw.replace(/ /g, '\u00A0'));
+                this.textContainer.appendChild(textNode);
+            } else {
                 const chip = document.createElement('span');
                 chip.className = 'chip';
-                chip.textContent = segment;
+                chip.textContent = token.raw;
                 this.textContainer.appendChild(chip);
-            } else {
-                // Replace spaces with non-breaking spaces
-                const textNode = document.createTextNode(segment.replace(/ /g, '\u00A0'));
-                this.textContainer.appendChild(textNode);
             }
         }
     }
@@ -144,4 +141,3 @@ export class TitleOverlay {
         this.host.remove();
     }
 }
-

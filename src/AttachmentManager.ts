@@ -3,13 +3,15 @@
  */
 
 import { ATTACHED_ATTR, SELECTORS } from './constants';
+import { InputParser } from './parser/InputParser';
 import { TitleOverlay } from './TitleOverlay';
-import { containsToday, log, setStartDate } from './utils';
+import { log, setStartDate } from './utils';
 
 export class AttachmentManager {
     private observer: MutationObserver | null = null;
     private currentTitleInput: HTMLInputElement | null = null;
     private overlay: TitleOverlay | null = null;
+    private parser = new InputParser();
 
     constructor() {
         this.init();
@@ -99,26 +101,26 @@ export class AttachmentManager {
         const overlay = new TitleOverlay(input);
         this.overlay = overlay;
 
-        // Track if we've already set today's date for current "today" detection
-        let todayDateApplied = false;
+        // Track if we've already applied a date
+        let appliedDate: Date | null = null;
 
         const processText = (text: string) => {
-            overlay.updateText(text);
+            const result = this.parser.parse(text);
+            overlay.updateTokens(result.tokens);
 
-            // Set date to today if "today" detected and not already applied
-            if (containsToday(text)) {
-                if (!todayDateApplied) {
-                    setStartDate(new Date());
+            // Apply date if detected and different from last applied
+            if (result.event.date) {
+                const newDate = result.event.date;
+                if (!appliedDate || newDate.toDateString() !== appliedDate.toDateString()) {
+                    setStartDate(newDate);
 
                     // This is a trick to trigger a re-render of the editor component
                     // Without this, the date input will not update immediately
                     input.dispatchEvent(new Event('focus', { bubbles: true }));
-
-                    todayDateApplied = true;
+                    appliedDate = newDate;
                 }
             } else {
-                // Reset flag when "today" is removed
-                todayDateApplied = false;
+                appliedDate = null;
             }
         };
 
@@ -156,4 +158,3 @@ export class AttachmentManager {
         this.currentTitleInput = null;
     }
 }
-

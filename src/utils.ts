@@ -45,11 +45,3 @@ export function setStartDate(date: Date): boolean {
 
     return true;
 }
-
-/**
- * Checks if text contains "today" (case-insensitive)
- */
-export function containsToday(text: string): boolean {
-    return /today/i.test(text);
-}
-
