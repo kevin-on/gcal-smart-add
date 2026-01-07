@@ -3,15 +3,61 @@
  * Content script that enables Todoist-like natural language input
  */
 
-const EXTENSION_NAME = 'Smart Quick Add';
+const EXTENSION_NAME = 'Smart Quick Add 1';
 const ATTACHED_ATTR = 'data-smart-quick-add-attached';
 
 const SELECTORS = {
     titleInput: 'input[aria-label*="Add title"], input[data-placeholder*="Add title"]',
+    startDateInput: 'input[aria-label="Start date"]',
 };
 
 function log(...args: unknown[]) {
     console.log(`[${EXTENSION_NAME}]`, ...args);
+}
+
+/**
+ * Formats a Date object to Google Calendar's display format
+ * e.g., "Wednesday, January 7"
+ */
+function formatDateForGCal(date: Date): string {
+    return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+    });
+}
+
+/**
+ * Sets the start date in Google Calendar's event editor
+ */
+function setStartDate(date: Date): boolean {
+    const dateInput = document.querySelector(SELECTORS.startDateInput) as HTMLInputElement | null;
+    if (!dateInput) {
+        log('Start date input not found');
+        return false;
+    }
+
+    const formattedDate = formatDateForGCal(date);
+
+    // Only update if different
+    if (dateInput.value === formattedDate) {
+        return false;
+    }
+
+    log('Setting start date to:', formattedDate);
+
+    // Set value and dispatch events to trigger Google Calendar's handlers
+    dateInput.value = formattedDate;
+    dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    return true;
+}
+
+/**
+ * Checks if text contains "today" (case-insensitive)
+ */
+function containsToday(text: string): boolean {
+    return /today/i.test(text);
 }
 
 /**
@@ -124,8 +170,8 @@ class TitleOverlay {
     updateText(text: string) {
         this.textContainer.innerHTML = '';
 
-        // Split by "today" as a whole word (case-insensitive), keeping the delimiter
-        const segments = text.split(/\b(today)\b/i);
+        // Split by "today" (case-insensitive), keeping the delimiter
+        const segments = text.split(/(today)/i);
 
         for (const segment of segments) {
             if (!segment) continue;
@@ -257,13 +303,36 @@ class AttachmentManager {
         const overlay = new TitleOverlay(input);
         this.overlay = overlay;
 
+        // Track if we've already set today's date for current "today" detection
+        let todayDateApplied = false;
+
+        const processText = (text: string) => {
+            overlay.updateText(text);
+
+            // Set date to today if "today" detected and not already applied
+            if (containsToday(text)) {
+                if (!todayDateApplied) {
+                    setStartDate(new Date());
+
+                    // This is a trick to trigger a re-render of the editor component
+                    // Without this, the date input will not update immediately
+                    input.dispatchEvent(new Event('focus', { bubbles: true }));
+
+                    todayDateApplied = true;
+                }
+            } else {
+                // Reset flag when "today" is removed
+                todayDateApplied = false;
+            }
+        };
+
         // Sync initial text if any
-        overlay.updateText(input.value);
+        processText(input.value);
 
         const handleInput = (event: Event) => {
             const target = event.target as HTMLInputElement;
             log('Title input:', target.value);
-            overlay.updateText(target.value);
+            processText(target.value);
         };
 
         input.addEventListener('input', handleInput);
