@@ -51,7 +51,6 @@ export class TitleOverlay {
             :host {
                 position: absolute;
                 pointer-events: none;
-                z-index: 9999;
             }
             .overlay-text {
                 font-family: ${computed.fontFamily};
@@ -65,6 +64,9 @@ export class TitleOverlay {
                 white-space: pre;
                 overflow: hidden;
                 color: ${this.getTextColor()};
+                height: 100%;
+                display: flex;
+                align-items: center;
             }
             .chip {
                 background: #e8f0fe;
