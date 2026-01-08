@@ -10,6 +10,7 @@ export class TitleOverlay {
     private input: HTMLInputElement;
     private rafId: number | null = null;
     private isDestroyed = false;
+    private isPaused = false;
     private originalTextColor: string;
     private originalCaretColor: string;
 
@@ -101,10 +102,35 @@ export class TitleOverlay {
     private startPositionTracking() {
         const tick = () => {
             if (this.isDestroyed) return;
+            if (this.isPaused) {
+                this.rafId = null;
+                return;
+            }
             this.updatePosition();
             this.rafId = requestAnimationFrame(tick);
         };
         this.rafId = requestAnimationFrame(tick);
+    }
+
+    /**
+     * Pauses the RAF loop to reduce CPU usage when tab is hidden
+     */
+    pause() {
+        if (this.isPaused) return;
+        this.isPaused = true;
+        if (this.rafId !== null) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
+    }
+
+    /**
+     * Resumes the RAF loop when tab becomes visible
+     */
+    resume() {
+        if (!this.isPaused || this.isDestroyed) return;
+        this.isPaused = false;
+        this.startPositionTracking();
     }
 
     updateTokens(tokens: Token[]) {

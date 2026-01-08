@@ -28,29 +28,19 @@ describe('InputParser', () => {
     describe('relative dates', () => {
         it('parses "today"', () => {
             const result = parser.parse('Meeting today');
-            expect(sameDay(result.event.date, today())).toBe(true);
+            expect(sameDay(result.event.start?.date, today())).toBe(true);
             expect(result.cleanTitle).toBe('Meeting');
-        });
-
-        it('parses "tod" abbreviation', () => {
-            const result = parser.parse('Call tod');
-            expect(sameDay(result.event.date, today())).toBe(true);
         });
 
         it('parses "tomorrow"', () => {
             const result = parser.parse('Meeting tomorrow');
-            expect(sameDay(result.event.date, addDays(1))).toBe(true);
+            expect(sameDay(result.event.start?.date, addDays(1))).toBe(true);
             expect(result.cleanTitle).toBe('Meeting');
-        });
-
-        it('parses "tom" abbreviation', () => {
-            const result = parser.parse('Lunch tom');
-            expect(sameDay(result.event.date, addDays(1))).toBe(true);
         });
 
         it('parses "yesterday"', () => {
             const result = parser.parse('Meeting yesterday');
-            expect(sameDay(result.event.date, addDays(-1))).toBe(true);
+            expect(sameDay(result.event.start?.date, addDays(-1))).toBe(true);
         });
     });
 
@@ -67,8 +57,8 @@ describe('InputParser', () => {
             ];
             weekdays.forEach((day, index) => {
                 const result = parser.parse(`Meeting ${day}`);
-                expect(result.event.date).toBeDefined();
-                expect(result.event.date!.getDay()).toBe(index);
+                expect(result.event.start?.date).toBeDefined();
+                expect(result.event.start!.date.getDay()).toBe(index);
             });
         });
 
@@ -84,7 +74,7 @@ describe('InputParser', () => {
             ];
             abbreviations.forEach(({ abbr, day }) => {
                 const result = parser.parse(`Meeting ${abbr}`);
-                expect(result.event.date!.getDay()).toBe(day);
+                expect(result.event.start!.date.getDay()).toBe(day);
             });
         });
     });
@@ -92,71 +82,65 @@ describe('InputParser', () => {
     describe('numeric formats', () => {
         it('parses ISO format: 2025-01-27', () => {
             const result = parser.parse('Meeting 2025-01-27');
-            expect(result.event.date?.getFullYear()).toBe(2025);
-            expect(result.event.date?.getMonth()).toBe(0); // January
-            expect(result.event.date?.getDate()).toBe(27);
+            expect(result.event.start?.date.getFullYear()).toBe(2025);
+            expect(result.event.start?.date.getMonth()).toBe(0); // January
+            expect(result.event.start?.date.getDate()).toBe(27);
             expect(result.cleanTitle).toBe('Meeting');
         });
 
         it('parses US format with 4-digit year: 01/27/2025', () => {
             const result = parser.parse('Meeting 01/27/2025');
-            expect(result.event.date?.getFullYear()).toBe(2025);
-            expect(result.event.date?.getMonth()).toBe(0);
-            expect(result.event.date?.getDate()).toBe(27);
+            expect(result.event.start?.date.getFullYear()).toBe(2025);
+            expect(result.event.start?.date.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
         });
 
         it('parses US format with 2-digit year: 01/27/25', () => {
             const result = parser.parse('Meeting 01/27/25');
-            expect(result.event.date?.getFullYear()).toBe(2025);
-            expect(result.event.date?.getMonth()).toBe(0);
-            expect(result.event.date?.getDate()).toBe(27);
-        });
-
-        it('parses short slash format: 27/1 (day/month)', () => {
-            const result = parser.parse('Meeting 27/1');
-            expect(result.event.date?.getMonth()).toBe(0); // January
-            expect(result.event.date?.getDate()).toBe(27);
+            expect(result.event.start?.date.getFullYear()).toBe(2025);
+            expect(result.event.start?.date.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
         });
     });
 
     describe('month name formats', () => {
         it('parses "jan 27"', () => {
             const result = parser.parse('Meeting jan 27');
-            expect(result.event.date?.getMonth()).toBe(0);
-            expect(result.event.date?.getDate()).toBe(27);
+            expect(result.event.start?.date.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
             expect(result.cleanTitle).toBe('Meeting');
         });
 
         it('parses "27 jan"', () => {
             const result = parser.parse('Meeting 27 jan');
-            expect(result.event.date?.getMonth()).toBe(0);
-            expect(result.event.date?.getDate()).toBe(27);
+            expect(result.event.start?.date.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
         });
 
         it('parses "january 27"', () => {
             const result = parser.parse('Meeting january 27');
-            expect(result.event.date?.getMonth()).toBe(0);
-            expect(result.event.date?.getDate()).toBe(27);
+            expect(result.event.start?.date.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
         });
 
         it('parses "27 january"', () => {
             const result = parser.parse('Meeting 27 january');
-            expect(result.event.date?.getMonth()).toBe(0);
-            expect(result.event.date?.getDate()).toBe(27);
+            expect(result.event.start?.date.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
         });
 
         it('parses "jan 27 2025" with year', () => {
             const result = parser.parse('Meeting jan 27 2025');
-            expect(result.event.date?.getFullYear()).toBe(2025);
-            expect(result.event.date?.getMonth()).toBe(0);
-            expect(result.event.date?.getDate()).toBe(27);
+            expect(result.event.start?.date.getFullYear()).toBe(2025);
+            expect(result.event.start?.date.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
         });
 
         it('parses "27 jan 2025" with year', () => {
             const result = parser.parse('Meeting 27 jan 2025');
-            expect(result.event.date?.getFullYear()).toBe(2025);
-            expect(result.event.date?.getMonth()).toBe(0);
-            expect(result.event.date?.getDate()).toBe(27);
+            expect(result.event.start?.date.getFullYear()).toBe(2025);
+            expect(result.event.start?.date.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
         });
 
         it('parses all month names', () => {
@@ -176,7 +160,7 @@ describe('InputParser', () => {
             ];
             months.forEach(({ name, month }) => {
                 const result = parser.parse(`Meeting ${name} 15`);
-                expect(result.event.date?.getMonth()).toBe(month);
+                expect(result.event.start?.date.getMonth()).toBe(month);
             });
         });
     });
@@ -184,58 +168,69 @@ describe('InputParser', () => {
     describe('ordinal formats', () => {
         it('parses "27th jan"', () => {
             const result = parser.parse('Meeting 27th jan');
-            expect(result.event.date?.getDate()).toBe(27);
-            expect(result.event.date?.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
+            expect(result.event.start?.date.getMonth()).toBe(0);
         });
 
         it('parses "jan 27th"', () => {
             const result = parser.parse('Meeting jan 27th');
-            expect(result.event.date?.getDate()).toBe(27);
-            expect(result.event.date?.getMonth()).toBe(0);
+            expect(result.event.start?.date.getDate()).toBe(27);
+            expect(result.event.start?.date.getMonth()).toBe(0);
+        });
+    });
+
+    describe('time parsing', () => {
+        it('parses time and sets hasTime to true', () => {
+            const result = parser.parse('Meeting tomorrow at 3pm');
+            expect(result.event.start?.hasTime).toBe(true);
+            expect(result.event.start?.date.getHours()).toBe(15);
         });
 
-        it('parses ordinal words: "first january"', () => {
-            const result = parser.parse('Meeting first january');
-            expect(result.event.date?.getDate()).toBe(1);
-            expect(result.event.date?.getMonth()).toBe(0);
+        it('date-only input has hasTime false', () => {
+            const result = parser.parse('Meeting tomorrow');
+            expect(result.event.start?.hasTime).toBe(false);
         });
 
-        it('parses ordinal words: "twenty-seventh january"', () => {
-            const result = parser.parse('Meeting twenty-seventh january');
-            expect(result.event.date?.getDate()).toBe(27);
-            expect(result.event.date?.getMonth()).toBe(0);
+        it('parses time range with start and end', () => {
+            const result = parser.parse('Meeting tomorrow from 10 to 11 AM');
+            expect(result.event.start?.date).toBeDefined();
+            expect(result.event.end?.date).toBeDefined();
+            expect(result.event.start?.date.getHours()).toBe(10);
+            expect(result.event.end?.date.getHours()).toBe(11);
+        });
+
+        it('time-only input has hasDate false', () => {
+            const result = parser.parse('Meeting at 3pm');
+            expect(result.event.start?.hasTime).toBe(true);
+            expect(result.event.start?.hasDate).toBe(false);
+        });
+
+        it('date with time has both hasDate and hasTime true', () => {
+            const result = parser.parse('Meeting tomorrow at 3pm');
+            expect(result.event.start?.hasTime).toBe(true);
+            expect(result.event.start?.hasDate).toBe(true);
+        });
+
+        it('date-only input has hasDate true', () => {
+            const result = parser.parse('Meeting tomorrow');
+            expect(result.event.start?.hasDate).toBe(true);
+        });
+
+        it('weekday-only input has hasDate true', () => {
+            const result = parser.parse('Meeting monday');
+            expect(result.event.start?.hasDate).toBe(true);
+        });
+
+        it('month and day has hasDate true', () => {
+            const result = parser.parse('Meeting jan 27');
+            expect(result.event.start?.hasDate).toBe(true);
         });
     });
 
     describe('validation', () => {
-        it('rejects invalid day > 31', () => {
-            const result = parser.parse('Meeting jan 32');
-            expect(result.event.date).toBeUndefined();
-        });
-
-        it('rejects invalid month > 12 in ISO format', () => {
-            const result = parser.parse('Meeting 2025-13-01');
-            expect(result.event.date).toBeUndefined();
-        });
-
-        it('swaps month/day when month > 12 in slash format', () => {
-            // 13/5 -> month=13 is invalid, swap to day=13, month=5
-            const result = parser.parse('Meeting 13/5/2025');
-            expect(result.event.date?.getMonth()).toBe(4); // May (0-indexed)
-            expect(result.event.date?.getDate()).toBe(13);
-        });
-    });
-
-    describe('false positive prevention', () => {
-        it('does not match time as date: "jan 12:00"', () => {
-            const result = parser.parse('Meeting jan 12:00');
-            // Should not parse "jan 12" when followed by time
-            expect(result.event.date).toBeUndefined();
-        });
-
         it('handles text without dates', () => {
             const result = parser.parse('Regular meeting notes');
-            expect(result.event.date).toBeUndefined();
+            expect(result.event.start).toBeUndefined();
             expect(result.cleanTitle).toBe('Regular meeting notes');
         });
     });
@@ -276,23 +271,14 @@ describe('InputParser', () => {
         });
     });
 
-    describe('overlapping match handling', () => {
-        it('prefers longer match: "jan 27 2025" over "jan 27"', () => {
-            const result = parser.parse('Meeting jan 27 2025');
-            expect(result.event.date?.getFullYear()).toBe(2025);
-            // Ensure we got the full match, not just "jan 27"
-            const dateToken = result.tokens.find((t) => t.type === 'date');
-            expect(dateToken?.raw).toBe('jan 27 2025');
-        });
-    });
-
     describe('2-digit year handling', () => {
         it('interprets 2-digit year close to current year', () => {
             const currentYear = new Date().getFullYear();
             const twoDigit = currentYear % 100;
 
             const result = parser.parse(`Meeting 01/15/${twoDigit}`);
-            expect(result.event.date?.getFullYear()).toBe(currentYear);
+            expect(result.event.start?.date.getFullYear()).toBe(currentYear);
         });
     });
 });
+

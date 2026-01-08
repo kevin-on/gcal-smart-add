@@ -5,13 +5,23 @@
 import { ATTACHED_ATTR, SELECTORS } from './constants';
 import { InputParser } from './parser/InputParser';
 import { TitleOverlay } from './TitleOverlay';
-import { log, setStartDate } from './utils';
+import {
+    log,
+    setDate,
+    setTime,
+    prepareForDateOnly,
+    prepareForDateTime,
+    queryEditorElements,
+    isEditorElementsValid,
+    EditorElements,
+} from './utils';
 
 export class AttachmentManager {
     private observer: MutationObserver | null = null;
     private currentTitleInput: HTMLInputElement | null = null;
     private overlay: TitleOverlay | null = null;
     private parser = new InputParser();
+    private editorElements: EditorElements | null = null;
 
     constructor() {
         this.init();
@@ -77,6 +87,11 @@ export class AttachmentManager {
             return;
         }
 
+        // Only work on full event edit page, ignore popup editor
+        if (!document.querySelector(SELECTORS.eventEditPage)) {
+            return;
+        }
+
         // Clean up any existing attachment before creating new one
         if (this.currentTitleInput && this.currentTitleInput !== input) {
             this.detachFromTitleInput(this.currentTitleInput);
@@ -95,37 +110,87 @@ export class AttachmentManager {
     }
 
     private attachToTitleInput(input: HTMLInputElement) {
-        log('Attached to title input');
+        // Magic function to rerender the editor component
+        const rerender = () => {
+            input.dispatchEvent(new Event('focus', { bubbles: true }));
+        };
 
         // Create overlay
         const overlay = new TitleOverlay(input);
         this.overlay = overlay;
 
-        // Track if we've already applied a date
-        let appliedDate: Date | null = null;
+        // Cache editor elements (re-queried if stale)
+        this.editorElements = queryEditorElements();
+
+        const getElements = (): EditorElements => {
+            if (!isEditorElementsValid(this.editorElements)) {
+                this.editorElements = queryEditorElements();
+            }
+            return this.editorElements!;
+        };
 
         const processText = (text: string) => {
             const result = this.parser.parse(text);
             overlay.updateTokens(result.tokens);
 
-            // Apply date if detected and different from last applied
-            if (result.event.date) {
-                const newDate = result.event.date;
-                if (!appliedDate || newDate.toDateString() !== appliedDate.toDateString()) {
-                    setStartDate(newDate);
+            if (result.event.start) {
+                log('parsed result:', result);
+                const elements = getElements();
 
-                    // This is a trick to trigger a re-render of the editor component
-                    // Without this, the date input will not update immediately
-                    input.dispatchEvent(new Event('focus', { bubbles: true }));
-                    appliedDate = newDate;
+                // Prepare the editor state based on whether we have time or not
+                if (result.event.start.hasTime) {
+                    prepareForDateTime(elements);
+                    rerender();
+                } else {
+                    prepareForDateOnly(elements);
+                    rerender();
                 }
-            } else {
-                appliedDate = null;
+
+                // Compute default end when not explicitly given
+                if (!result.event.end) {
+                    if (result.event.start.hasTime) {
+                        const endDate = new Date(result.event.start.date);
+                        endDate.setHours(endDate.getHours() + 1);
+                        result.event.end = {
+                            date: endDate,
+                            hasTime: true,
+                            hasDate: result.event.start.hasDate,
+                        };
+                    } else if (result.event.start.hasDate) {
+                        // End = same date, no time
+                        result.event.end = {
+                            date: new Date(result.event.start.date),
+                            hasTime: false,
+                            hasDate: true,
+                        };
+                    }
+                }
+
+                const startDateChanged = result.event.start.hasDate
+                    ? setDate(elements, result.event.start.date, 'start')
+                    : false;
+                const endDateChanged = result.event.end?.hasDate
+                    ? setDate(elements, result.event.end.date, 'end')
+                    : false;
+
+                let startTimeChanged = false;
+                let endTimeChanged = false;
+                if (result.event.start.hasTime) {
+                    startTimeChanged = setTime(elements, result.event.start.date, 'start');
+                    endTimeChanged = result.event.end?.hasTime
+                        ? setTime(elements, result.event.end.date, 'end')
+                        : false;
+                }
+
+                // Trigger re-render when start or end date changed
+                if (startDateChanged || endDateChanged || startTimeChanged || endTimeChanged) {
+                    rerender();
+                }
             }
         };
 
-        // Sync initial text if any
-        processText(input.value);
+        // For initial input, only update the overlay and do not change the editor state
+        overlay.updateTokens(this.parser.parse(input.value).tokens);
 
         const handleInput = (event: Event) => {
             const target = event.target as HTMLInputElement;
@@ -144,6 +209,9 @@ export class AttachmentManager {
         this.overlay?.destroy();
         this.overlay = null;
 
+        // Clear cached elements
+        this.editorElements = null;
+
         const handler = (input as any).__smartQuickAddHandler;
         if (handler) {
             input.removeEventListener('input', handler);
@@ -154,7 +222,22 @@ export class AttachmentManager {
 
     destroy() {
         this.observer?.disconnect();
+        this.observer = null;
         this.detachFromTitleInput(this.currentTitleInput);
         this.currentTitleInput = null;
+    }
+
+    /**
+     * Pauses expensive operations (RAF loop) when tab is hidden
+     */
+    pause() {
+        this.overlay?.pause();
+    }
+
+    /**
+     * Resumes operations when tab becomes visible
+     */
+    resume() {
+        this.overlay?.resume();
     }
 }

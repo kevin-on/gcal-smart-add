@@ -17,5 +17,8 @@
         "prettier": "^3.2.4",
         "typescript": "^5.3.3",
         "vitest": "^2.0.0"
+    },
+    "dependencies": {
+        "chrono-node": "^2.9.0"
     }
 }
