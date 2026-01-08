@@ -257,9 +257,9 @@ export class AttachmentManager {
             log('Save button not found');
         }
 
-        // Handle Enter key in title input
+        // Handle Enter key in title input (skip if IME is composing)
         this.keydownHandler = (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !e.isComposing) {
                 replaceWithCleanTitle();
             }
         };
