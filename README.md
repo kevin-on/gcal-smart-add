@@ -2,6 +2,8 @@
 
 A Chrome extension that brings Todoist-style natural language input to Google Calendar. Type event titles with dates and times in natural language, and the extension automatically parses them and fills in the date/time fields.
 
+![Demo](demo.gif)
+
 ## Usage Examples
 
 Type naturally in the event title field:
