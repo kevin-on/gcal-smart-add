@@ -1,5 +1,5 @@
 /**
- * Utility functions for Smart Quick Add
+ * Utility functions for Google Calendar Smart Add
  */
 
 import { EXTENSION_NAME, SELECTORS } from './constants';

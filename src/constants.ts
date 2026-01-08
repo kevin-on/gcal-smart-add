@@ -1,10 +1,10 @@
 /**
- * Smart Quick Add for Google Calendar
+ * Google Calendar Smart Add
  * Constants and selectors
  */
 
-export const EXTENSION_NAME = 'Smart Quick Add';
-export const ATTACHED_ATTR = 'data-smart-quick-add-attached';
+export const EXTENSION_NAME = 'Google Calendar Smart Add';
+export const ATTACHED_ATTR = 'data-smart-add-attached';
 
 export const SELECTORS = {
     titleInput:

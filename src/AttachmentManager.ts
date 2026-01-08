@@ -220,7 +220,7 @@ export class AttachmentManager {
         };
 
         input.addEventListener('input', handleInput);
-        (input as any).__smartQuickAddHandler = handleInput;
+        (input as any).__smartAddHandler = handleInput;
 
         // Attach save button handler to replace title with cleanTitle before submit
         this.attachSaveButtonHandler(input);
@@ -298,10 +298,10 @@ export class AttachmentManager {
         this.cleanTitle = '';
         this.isFeatureDisabled = false;
 
-        const handler = (input as any).__smartQuickAddHandler;
+        const handler = (input as any).__smartAddHandler;
         if (handler) {
             input.removeEventListener('input', handler);
-            delete (input as any).__smartQuickAddHandler;
+            delete (input as any).__smartAddHandler;
         }
         input.removeAttribute(ATTACHED_ATTR);
     }

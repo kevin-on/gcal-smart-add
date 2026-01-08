@@ -1,5 +1,5 @@
 /**
- * Smart Quick Add for Google Calendar
+ * Google Calendar Smart Add
  * Content script that enables Todoist-like natural language input
  */
 

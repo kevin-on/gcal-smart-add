@@ -28,7 +28,7 @@ export class TitleOverlay {
         this.originalCaretColor = computed.caretColor;
 
         this.host = document.createElement('div');
-        this.host.className = 'smart-quick-add-overlay-host';
+        this.host.className = 'smart-add-overlay-host';
         this.shadow = this.host.attachShadow({ mode: 'closed' });
 
         // Create text container inside shadow DOM
@@ -187,8 +187,8 @@ export class TitleOverlay {
         this.isDisabled = disabled;
         this.toggleButton.textContent = disabled ? 'Turn on' : 'Turn off';
         this.tooltip.textContent = disabled
-            ? 'Turn on smart quick add'
-            : 'Turn off smart quick add';
+            ? 'Turn on smart add'
+            : 'Turn off smart add';
 
         if (disabled) {
             this.textContainer.style.opacity = '0';

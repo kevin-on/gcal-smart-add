@@ -1,5 +1,5 @@
 /**
- * Parser types for Smart Quick Add
+ * Parser types for Google Calendar Smart Add
  */
 
 export type TokenType = 'text' | 'date';
