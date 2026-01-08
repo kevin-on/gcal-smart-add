@@ -22,6 +22,9 @@ export class AttachmentManager {
     private overlay: TitleOverlay | null = null;
     private parser = new InputParser();
     private editorElements: EditorElements | null = null;
+    private cleanTitle: string = '';
+    private saveButtonHandler: ((e: Event) => void) | null = null;
+    private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
     constructor() {
         this.init();
@@ -132,6 +135,7 @@ export class AttachmentManager {
         const processText = (text: string) => {
             const result = this.parser.parse(text);
             overlay.updateTokens(result.tokens);
+            this.cleanTitle = result.cleanTitle;
 
             if (result.event.start) {
                 log('parsed result:', result);
@@ -190,7 +194,9 @@ export class AttachmentManager {
         };
 
         // For initial input, only update the overlay and do not change the editor state
-        overlay.updateTokens(this.parser.parse(input.value).tokens);
+        const initialResult = this.parser.parse(input.value);
+        overlay.updateTokens(initialResult.tokens);
+        this.cleanTitle = initialResult.cleanTitle;
 
         const handleInput = (event: Event) => {
             const target = event.target as HTMLInputElement;
@@ -200,6 +206,62 @@ export class AttachmentManager {
 
         input.addEventListener('input', handleInput);
         (input as any).__smartQuickAddHandler = handleInput;
+
+        // Attach save button handler to replace title with cleanTitle before submit
+        this.attachSaveButtonHandler(input);
+    }
+
+    private attachSaveButtonHandler(input: HTMLInputElement) {
+        // Helper to replace title with cleanTitle
+        const replaceWithCleanTitle = () => {
+            if (this.cleanTitle && input.value !== this.cleanTitle) {
+                log('Replacing title with cleanTitle:', this.cleanTitle);
+
+                // Set the native value to bypass React's controlled input
+                const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                    HTMLInputElement.prototype,
+                    'value'
+                )?.set;
+                nativeInputValueSetter?.call(input, this.cleanTitle);
+
+                // Dispatch input event to sync React state
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        };
+
+        // Handle Save button click
+        const saveButton = document.querySelector('button[aria-label="Save"]');
+        if (saveButton) {
+            this.saveButtonHandler = () => replaceWithCleanTitle();
+            saveButton.addEventListener('click', this.saveButtonHandler, { capture: true });
+            log('Save button handler attached');
+        } else {
+            log('Save button not found');
+        }
+
+        // Handle Enter key in title input
+        this.keydownHandler = (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                replaceWithCleanTitle();
+            }
+        };
+        input.addEventListener('keydown', this.keydownHandler, { capture: true });
+        log('Keydown handler attached');
+    }
+
+    private detachSaveButtonHandler() {
+        if (this.saveButtonHandler) {
+            const saveButton = document.querySelector('button[aria-label="Save"]');
+            saveButton?.removeEventListener('click', this.saveButtonHandler, { capture: true });
+            this.saveButtonHandler = null;
+        }
+    }
+
+    private detachKeydownHandler(input: HTMLInputElement) {
+        if (this.keydownHandler) {
+            input.removeEventListener('keydown', this.keydownHandler, { capture: true });
+            this.keydownHandler = null;
+        }
     }
 
     private detachFromTitleInput(input: HTMLInputElement | null) {
@@ -211,6 +273,11 @@ export class AttachmentManager {
 
         // Clear cached elements
         this.editorElements = null;
+
+        // Detach save handlers
+        this.detachSaveButtonHandler();
+        this.detachKeydownHandler(input);
+        this.cleanTitle = '';
 
         const handler = (input as any).__smartQuickAddHandler;
         if (handler) {
