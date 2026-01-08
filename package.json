@@ -1,5 +1,5 @@
 {
-    "name": "gcal-smart-add",
+    "name": "gcal-smart-quick-add",
     "version": "0.1.0",
     "description": "Todoist-like natural language input for Google Calendar",
     "scripts": {
