@@ -25,6 +25,7 @@ export class AttachmentManager {
     private cleanTitle: string = '';
     private saveButtonHandler: ((e: Event) => void) | null = null;
     private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+    private isFeatureDisabled = false;
 
     constructor() {
         this.init();
@@ -118,10 +119,6 @@ export class AttachmentManager {
             input.dispatchEvent(new Event('focus', { bubbles: true }));
         };
 
-        // Create overlay
-        const overlay = new TitleOverlay(input);
-        this.overlay = overlay;
-
         // Cache editor elements (re-queried if stale)
         this.editorElements = queryEditorElements();
 
@@ -132,9 +129,12 @@ export class AttachmentManager {
             return this.editorElements!;
         };
 
-        const processText = (text: string) => {
+        const processText = (text: string, targetOverlay: TitleOverlay) => {
+            if (this.isFeatureDisabled) {
+                return;
+            }
             const result = this.parser.parse(text);
-            overlay.updateTokens(result.tokens);
+            targetOverlay.updateTokens(result.tokens);
             this.cleanTitle = result.cleanTitle;
 
             if (result.event.start) {
@@ -193,15 +193,30 @@ export class AttachmentManager {
             }
         };
 
+        const overlay = new TitleOverlay(input, (isDisabled: boolean) => {
+            this.isFeatureDisabled = isDisabled;
+            if (isDisabled) {
+                this.cleanTitle = '';
+                return;
+            }
+            processText(input.value, overlay);
+        });
+        this.overlay = overlay;
+
         // For initial input, only update the overlay and do not change the editor state
-        const initialResult = this.parser.parse(input.value);
-        overlay.updateTokens(initialResult.tokens);
-        this.cleanTitle = initialResult.cleanTitle;
+        if (!this.isFeatureDisabled) {
+            const initialResult = this.parser.parse(input.value);
+            overlay.updateTokens(initialResult.tokens);
+            this.cleanTitle = initialResult.cleanTitle;
+        }
 
         const handleInput = (event: Event) => {
             const target = event.target as HTMLInputElement;
+            if (this.isFeatureDisabled) {
+                return;
+            }
             log('Title input:', target.value);
-            processText(target.value);
+            processText(target.value, overlay);
         };
 
         input.addEventListener('input', handleInput);
@@ -214,6 +229,9 @@ export class AttachmentManager {
     private attachSaveButtonHandler(input: HTMLInputElement) {
         // Helper to replace title with cleanTitle
         const replaceWithCleanTitle = () => {
+            if (this.isFeatureDisabled) {
+                return;
+            }
             if (this.cleanTitle && input.value !== this.cleanTitle) {
                 log('Replacing title with cleanTitle:', this.cleanTitle);
 
@@ -278,6 +296,7 @@ export class AttachmentManager {
         this.detachSaveButtonHandler();
         this.detachKeydownHandler(input);
         this.cleanTitle = '';
+        this.isFeatureDisabled = false;
 
         const handler = (input as any).__smartQuickAddHandler;
         if (handler) {

@@ -7,15 +7,20 @@ export class TitleOverlay {
     private host: HTMLDivElement;
     private shadow: ShadowRoot;
     private textContainer: HTMLDivElement;
+    private toggleButton: HTMLButtonElement;
+    private tooltip: HTMLDivElement;
     private input: HTMLInputElement;
     private rafId: number | null = null;
     private isDestroyed = false;
     private isPaused = false;
+    private isDisabled = false;
     private originalTextColor: string;
     private originalCaretColor: string;
+    private onToggle?: (isDisabled: boolean) => void;
 
-    constructor(input: HTMLInputElement) {
+    constructor(input: HTMLInputElement, onToggle?: (isDisabled: boolean) => void) {
         this.input = input;
+        this.onToggle = onToggle;
 
         // Capture original colors BEFORE modifying styles
         const computed = window.getComputedStyle(input);
@@ -36,6 +41,26 @@ export class TitleOverlay {
         this.shadow.appendChild(style);
         this.shadow.appendChild(this.textContainer);
 
+        this.toggleButton = document.createElement('button');
+        this.toggleButton.type = 'button';
+        this.toggleButton.className = 'toggle-button';
+        this.toggleButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.setDisabled(!this.isDisabled);
+            this.onToggle?.(this.isDisabled);
+            this.input.focus();
+        });
+        this.toggleButton.addEventListener('mouseenter', () => this.showTooltip());
+        this.toggleButton.addEventListener('mouseleave', () => this.hideTooltip());
+        this.toggleButton.addEventListener('focus', () => this.showTooltip());
+        this.toggleButton.addEventListener('blur', () => this.hideTooltip());
+        this.shadow.appendChild(this.toggleButton);
+
+        this.tooltip = document.createElement('div');
+        this.tooltip.className = 'tooltip';
+        this.shadow.appendChild(this.tooltip);
+
         // Mount and start continuous position tracking
         document.body.appendChild(this.host);
         this.startPositionTracking();
@@ -43,6 +68,7 @@ export class TitleOverlay {
         // Make input text transparent (caret stays visible with original color)
         this.input.style.caretColor = this.getCaretColor();
         this.input.style.color = 'transparent';
+        this.setDisabled(false);
     }
 
     private getStyles(): string {
@@ -58,7 +84,7 @@ export class TitleOverlay {
                 font-weight: ${computed.fontWeight};
                 line-height: ${computed.lineHeight};
                 letter-spacing: ${computed.letterSpacing};
-                padding: ${computed.paddingTop} ${computed.paddingRight} ${computed.paddingBottom} ${computed.paddingLeft};
+                padding: ${computed.paddingTop} calc(${computed.paddingRight} + 64px) ${computed.paddingBottom} ${computed.paddingLeft};
                 border: ${computed.borderWidth} solid transparent;
                 box-sizing: border-box;
                 white-space: pre;
@@ -67,11 +93,67 @@ export class TitleOverlay {
                 height: 100%;
                 display: flex;
                 align-items: center;
+                pointer-events: none;
             }
             .chip {
                 background: #e8f0fe;
                 color: #1a73e8;
                 border-radius: 2px;
+            }
+            .toggle-button {
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 12px;
+                font-weight: 500;
+                padding: 2px 8px;
+                border-radius: 4px;
+                border: 1px solid #dadce0;
+                background: #f8f9fa;
+                color: #5f6368;
+                cursor: pointer;
+                pointer-events: auto;
+                height: 24px;
+                display: inline-flex;
+                align-items: center;
+                box-shadow: 0 1px 2px rgba(60, 64, 67, 0.15);
+            }
+            .toggle-button:hover {
+                background: #e8eaed;
+            }
+            .toggle-button:active {
+                background: #d2e3fc;
+            }
+            .tooltip {
+                position: absolute;
+                right: 0;
+                top: -34px;
+                padding: 6px 8px;
+                border-radius: 4px;
+                background: #202124;
+                color: #fff;
+                font-size: 12px;
+                line-height: 1.4;
+                white-space: nowrap;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                opacity: 0;
+                transform: translateY(4px);
+                pointer-events: none;
+                transition: opacity 120ms ease, transform 120ms ease;
+            }
+            .tooltip::after {
+                content: '';
+                position: absolute;
+                bottom: -6px;
+                right: 12px;
+                border-width: 6px 6px 0 6px;
+                border-style: solid;
+                border-color: #202124 transparent transparent transparent;
+            }
+            .tooltip.visible {
+                opacity: 1;
+                transform: translateY(0);
             }
         `;
     }
@@ -99,6 +181,33 @@ export class TitleOverlay {
         this.host.style.top = `${rect.top + window.scrollY}px`;
         this.host.style.width = `${rect.width}px`;
         this.host.style.height = `${rect.height}px`;
+    }
+
+    private setDisabled(disabled: boolean) {
+        this.isDisabled = disabled;
+        this.toggleButton.textContent = disabled ? 'Turn on' : 'Turn off';
+        this.tooltip.textContent = disabled
+            ? 'Turn on smart quick add'
+            : 'Turn off smart quick add';
+
+        if (disabled) {
+            this.textContainer.style.opacity = '0';
+            this.input.style.color = this.originalTextColor;
+            this.input.style.caretColor = this.originalCaretColor;
+            return;
+        }
+
+        this.textContainer.style.opacity = '1';
+        this.input.style.caretColor = this.getCaretColor();
+        this.input.style.color = 'transparent';
+    }
+
+    private showTooltip() {
+        this.tooltip.classList.add('visible');
+    }
+
+    private hideTooltip() {
+        this.tooltip.classList.remove('visible');
     }
 
     private startPositionTracking() {
