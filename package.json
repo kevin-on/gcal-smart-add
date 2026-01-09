@@ -1,6 +1,6 @@
 {
     "name": "gcal-smart-add",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "Todoist-like natural language input for Google Calendar",
     "scripts": {
         "build": "mkdir -p dist && esbuild src/content.ts --bundle --outfile=dist/content.js --format=iife && cp src/styles.css dist/styles.css",
