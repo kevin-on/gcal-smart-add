@@ -3,7 +3,6 @@
     "name": "Google Calendar Smart Add",
     "version": "1.0.1",
     "description": "Todoist-like natural language input for Google Calendar - highlights date tokens",
-    "permissions": ["storage"],
     "host_permissions": ["https://calendar.google.com/*"],
     "content_scripts": [
         {
