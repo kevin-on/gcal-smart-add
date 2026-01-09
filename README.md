@@ -88,6 +88,17 @@ src/
 dist/                    # Built extension files
 ```
 
+### Releasing
+
+Update the version in `manifest.json`, then tag and push:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+GitHub Actions will automatically create a release with the extension ZIP attached.
+
 ## License
 
 This project is licensed under the MIT License.
