@@ -24,7 +24,8 @@ The highlighted blue chips show what the parser detected. Click "Turn off" if yo
 - **Toggle On/Off**: Easily enable or disable the smart parsing feature with a button
 
 > [!IMPORTANT]
-> This extension only works on the **detailed event page**, not the quick add popup.
+> - This extension only works on the **detailed event page**, not the quick add popup.
+> - Currently only English is supported.
 
 ## Installation
 
@@ -33,6 +34,10 @@ The highlighted blue chips show what the parser detected. Click "Turn off" if yo
 3. Enable "Developer mode" (toggle in top-right corner)
 4. Click "Load unpacked"
 5. Select the project directory
+
+## Feedback
+
+Bug reports and feature requests are welcome! Please [open an issue](https://github.com/kevin-on/gcal-smart-add/issues/new) on GitHub.
 
 ---
 
@@ -46,11 +51,6 @@ The extension uses [chrono-node](https://github.com/wanasit/chrono) for natural 
 2. Detected tokens are highlighted with colored chips using an overlay
 3. Date and time fields in the editor are automatically populated
 4. When you save, the date/time text is removed from the event title
-
-### Prerequisites
-
-- Node.js and npm
-- Chrome browser
 
 ### Setup
 
@@ -71,23 +71,6 @@ npm test
 npm run format
 ```
 
-### Project Structure
-
-```
-src/
-├── content.ts           # Extension entry point
-├── AttachmentManager.ts # Manages lifecycle of editor attachments
-├── TitleOverlay.ts      # Renders overlay with highlighted tokens
-├── parser/
-│   ├── InputParser.ts   # Natural language parsing logic
-│   └── types.ts         # TypeScript type definitions
-├── utils.ts             # Helper functions for DOM manipulation
-├── constants.ts         # Selectors and constants
-└── styles.css           # Extension styles
-
-dist/                    # Built extension files
-```
-
 ### Releasing
 
 Update the version in `manifest.json` and `package.json`, then tag and push:
@@ -98,6 +81,12 @@ git push origin v1.0.0
 ```
 
 GitHub Actions will automatically create a release with the extension ZIP attached.
+
+## Support
+
+If you find this extension helpful, consider buying me a coffee!
+
+<a href="https://buymeacoffee.com/kevin.on" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
 
 ## License
 
