@@ -1,27 +1,30 @@
 name: Release
 
 on:
-    push:
-        tags:
-            - "v*"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-            - run: npm ci
-            - run: npm run build
+      - run: npm ci
+      - run: npm run build
 
-            - name: Create ZIP
-              run: zip -r gcal-smart-add-${{ github.ref_name }}.zip manifest.json dist/ icons/
+      - name: Create ZIP
+        run: zip -r gcal-smart-add-${{ github.ref_name }}.zip manifest.json dist/ icons/
 
-            - name: Create Release
-              uses: softprops/action-gh-release@v1
-              with:
-                  files: gcal-smart-add-${{ github.ref_name }}.zip
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: gcal-smart-add-${{ github.ref_name }}.zip
