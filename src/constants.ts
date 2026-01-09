@@ -15,4 +15,5 @@ export const SELECTORS = {
     endTimeInput: 'input[aria-label="End time"]',
     allDayCheckbox: 'input[aria-label="All day"]',
     eventEditPage: '*[aria-label="Event edit page"]',
+    saveButton: 'button[aria-label="Save"]',
 };

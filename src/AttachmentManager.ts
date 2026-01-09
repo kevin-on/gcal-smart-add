@@ -123,10 +123,10 @@ export class AttachmentManager {
         this.editorElements = queryEditorElements();
 
         const getElements = (): EditorElements => {
-            if (!isEditorElementsValid(this.editorElements)) {
+            if (!this.editorElements || !isEditorElementsValid(this.editorElements)) {
                 this.editorElements = queryEditorElements();
             }
-            return this.editorElements!;
+            return this.editorElements;
         };
 
         const processText = (text: string, targetOverlay: TitleOverlay) => {
@@ -247,15 +247,16 @@ export class AttachmentManager {
             }
         };
 
-        // Handle Save button click
-        const saveButton = document.querySelector('button[aria-label="Save"]');
-        if (saveButton) {
-            this.saveButtonHandler = () => replaceWithCleanTitle();
-            saveButton.addEventListener('click', this.saveButtonHandler, { capture: true });
-            log('Save button handler attached');
-        } else {
-            log('Save button not found');
-        }
+        // Use event delegation to handle save button clicks
+        // This ensures the handler works even if the button is re-rendered
+        this.saveButtonHandler = (e: Event) => {
+            const target = e.target as HTMLElement;
+            if (target.closest(SELECTORS.saveButton)) {
+                replaceWithCleanTitle();
+            }
+        };
+        document.body.addEventListener('click', this.saveButtonHandler, { capture: true });
+        log('Save button handler attached (delegated)');
 
         // Handle Enter key in title input (skip if IME is composing)
         this.keydownHandler = (e: KeyboardEvent) => {
@@ -269,8 +270,7 @@ export class AttachmentManager {
 
     private detachSaveButtonHandler() {
         if (this.saveButtonHandler) {
-            const saveButton = document.querySelector('button[aria-label="Save"]');
-            saveButton?.removeEventListener('click', this.saveButtonHandler, { capture: true });
+            document.body.removeEventListener('click', this.saveButtonHandler, { capture: true });
             this.saveButtonHandler = null;
         }
     }
