@@ -90,7 +90,7 @@ dist/                    # Built extension files
 
 ### Releasing
 
-Update the version in `manifest.json`, then tag and push:
+Update the version in `manifest.json` and `package.json`, then tag and push:
 
 ```bash
 git tag v1.0.0
